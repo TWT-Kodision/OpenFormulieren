@@ -1,6 +1,12 @@
 {% extends 'admin/change_form.html' %}
 {% load i18n solo_tags %}
 
+{% block object-tools-items %}{{ block.super }}
+  <li>
+    <a href="{% url 'submissions:logs-evaluated-logic' original.pk %}">{% trans "Logging" %}</a>
+  </li>
+{% endblock %}
+
 {% block after_field_sets %}
     <fieldset class="module aligned">
         <div class="form-row field-merged_data">

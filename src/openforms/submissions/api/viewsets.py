@@ -16,6 +16,7 @@ from openforms.api import pagination
 from openforms.api.filters import PermissionFilterMixin
 from openforms.api.serializers import ExceptionSerializer
 from openforms.config.models import GlobalConfiguration
+from openforms.forms.models.form import FormLogic
 from openforms.logging import logevent
 from openforms.prefill import prefill_variables
 from openforms.utils.api.throttle_classes import PollingRateThrottle
@@ -197,6 +198,11 @@ class SubmissionViewSet(
         submission.save()
 
         logevent.form_submit_success(submission)
+        
+        rules = FormLogic.objects.filter(form=submission.form)
+        for rule in rules :
+            logevent.submission_logic_evaluated(submission, rule)
+        
 
         remove_submission_from_session(submission, self.request.session)
         remove_submission_uploads_from_session(submission, self.request.session)

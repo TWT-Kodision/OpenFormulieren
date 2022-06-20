@@ -1,6 +1,6 @@
 from django.urls import path
 
-from .views import ResumeSubmissionView, SubmissionAttachmentDownloadView
+from .views import ResumeSubmissionView, SubmissionAttachmentDownloadView, LogsEvaluatedLogic
 
 app_name = "submissions"
 
@@ -15,4 +15,9 @@ urlpatterns = [
         SubmissionAttachmentDownloadView.as_view(),
         name="attachment-download",
     ),
+    path(
+        "<int:submission_id>/evaluated-logic-logs",
+        LogsEvaluatedLogic.as_view(),
+        name="logs-evaluated-logic",
+    )
 ]
