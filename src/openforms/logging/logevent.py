@@ -437,13 +437,15 @@ def submission_export_list(form: "Form", user: "User"):
         user=user,
     )
 
-def submission_logic_evaluated(submission: "Submission", evaluated_logic):
+def submission_logic_evaluated(submission: "Submission", evaluated_logic, form_step, trigger = False):
     _create_log(
         submission,
         "submission_logic_evaluated",
         extra_data={
             'json_logic_trigger' : evaluated_logic.json_logic_trigger,
-            'actions' : evaluated_logic.actions}
+            'actions' : evaluated_logic.actions,
+            'step_name': str(form_step.form_definition.name),
+            'trigger' :  trigger}
     )
 
 # - - -

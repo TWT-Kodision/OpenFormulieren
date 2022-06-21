@@ -14,6 +14,7 @@ from privates.views import PrivateMediaView
 from rest_framework.reverse import reverse
 
 from openforms.authentication.constants import FORM_AUTH_SESSION_KEY
+from openforms.logging.models import TimelineLogProxy
 
 from .constants import RegistrationStatuses
 from .models import Submission, SubmissionFileAttachment
@@ -22,7 +23,7 @@ from .utils import add_submmission_to_session
 
 from django.utils.decorators import method_decorator
 from django.contrib.admin.views.decorators import staff_member_required
-
+from django.contrib.contenttypes.models import ContentType
 logger = logging.getLogger(__name__)
 
 
@@ -202,15 +203,27 @@ class SubmissionAttachmentDownloadView(LoginRequiredMixin, PrivateMediaView):
 @method_decorator(staff_member_required, name='dispatch')
 class LogsEvaluatedLogic(ListView):
     
+    model = TimelineLogProxy
     template_name = 'submission_logs/submission_logs.html'
     context_object_name = "logs_activity"
 
     def get(self, request : HttpRequest, submission_id):
-        self.queryset = Submission.objects.get(id=submission_id)
-        self.id = submission_id
+        logs = TimelineLogProxy.objects.filter(
+            template="logging/events/submission_logic_evaluated.txt", 
+            object_id = submission_id)
+        logs_information = []
+        print(logs)
+        for log in logs :
+            log_information = {}
+            log_information['name'] = log.timestamp
+            log_information['step_name'] = log.extra_data['step_name']
+            log_information['trigger'] = log.extra_data['trigger']
+            #log_information['property_name'] = log.extra_data['json_logic_trigger']['==']["property"]["value"]
+            logs_information.append(log_information)
+
+            self.queryset = logs_information
         return super().get(request)
 
     def get_context_data(self):
         context = super().get_context_data()
-        context['id'] = self.id
         return context

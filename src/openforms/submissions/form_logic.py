@@ -1,4 +1,5 @@
 from copy import deepcopy
+import logging
 from typing import TYPE_CHECKING, Any, Dict
 
 import elasticapm
@@ -8,9 +9,13 @@ from openforms.formio.service import get_dynamic_configuration
 from openforms.formio.utils import get_default_values, iter_components
 from openforms.forms.constants import LogicActionTypes
 from openforms.forms.models import FormLogic
+from openforms.logging import logevent
 from openforms.prefill import JSONObject
 
 from .models.submission_step import DirtyData
+
+
+logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:  # pragma: nocover
     from .models import Submission, SubmissionStep
@@ -94,6 +99,7 @@ def evaluate_form_logic(
     updated_data = deepcopy(step.data)
     for rule in rules:
         if jsonLogic(rule.json_logic_trigger, data):
+            logevent.submission_logic_evaluated(submission, rule, step.form_step, True)
             for action in rule.actions:
                 action_details = action["action"]
                 if action_details["type"] == LogicActionTypes.value:

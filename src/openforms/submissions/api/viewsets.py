@@ -198,11 +198,6 @@ class SubmissionViewSet(
         submission.save()
 
         logevent.form_submit_success(submission)
-        
-        rules = FormLogic.objects.filter(form=submission.form)
-        for rule in rules :
-            logevent.submission_logic_evaluated(submission, rule)
-        
 
         remove_submission_from_session(submission, self.request.session)
         remove_submission_uploads_from_session(submission, self.request.session)
