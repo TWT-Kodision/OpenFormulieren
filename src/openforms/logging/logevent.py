@@ -444,7 +444,7 @@ def submission_logic_evaluated(submission: "Submission", evaluated_logic, form_s
         extra_data={
             'json_logic_trigger' : evaluated_logic.json_logic_trigger,
             'actions' : evaluated_logic.actions,
-            'step_name': str(form_step.form_definition.name),
+            'step_name': str(form_step.form_definition.name) if form_step is not None else '',
             'trigger' :  trigger}
     )
 

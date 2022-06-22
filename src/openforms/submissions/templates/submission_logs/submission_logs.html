@@ -1,6 +1,10 @@
 {% extends "admin/change_form.html" %}
-{% load i18n admin_urls %}
+{% load i18n admin_urls static %}
 
+{% block extrastyle %}
+<link rel="stylesheet" href="{% static "bundles/core-css.css" %}">
+{{ block.super }}
+{% endblock %}
 
 {% block breadcrumbs %}
 <div class="breadcrumbs">
@@ -9,62 +13,47 @@
 {% endblock %}
 
 {% block content %}
-    <h1>{% trans  "Logs" %}</h1>
+    <h1>{% trans  "Logging" %}</h1>
     {% block field_sets %}
         {% for log in logs_activity  %}
             <fieldset class="module aligned collapsed">
-                <h2>{{ log.name }} - {% trans 'Logic' %} - </h2>
+                <h2>{{ log.name|date:'Y-m-d H:i:s' }} - {% trans 'Logic' %} - <a class="collapse-link" data-text-show=" {% trans 'Show' %}" data-text-hide=" {% trans 'Hide' %} " href=""></a> </h2>
 
                 <h4> {% trans "Variables" %} </h4>
-                <table style='width:100%'>
+                <table class="logic-rules-tables">
                     <thead>
                         <th colespan='10'> {% trans "Property name" %} </th>
-                        <th colespan='2'> {% trans "Value" %} </th>
+                        <th colespan='1'> {% trans "Value" %} </th>
                     </thead>
                     <tbody>
-                        <td>{{log.step_name}} :</td>
-                        <td> {% if log.trigger %} {% trans "Yes" %} {% else %} {% trans "No" %} {% endif %} </td>
+                        <tr>
+                            <td>{{log.step_name}} {{log.source_component}}</td>
+                            <td>{{log.source_value}}</td>
+                        </tr>
+
                     </tbody>
                 </table>
 
                 <h4> {% trans "Logic rules" %} </h4>
-                <table style='width:100%'>
+                <table class="logic-rules-tables">
                     <thead>
                         <th colespan='10'> {% trans "Rule" %} </th>
-                        <th colespan='5'> {% trans "Trigger" %} </th>
+                        <th colespan='2'> {% trans "Trigger" %} </th>
                         <th colespan='2'> {% trans "Action" %} </th>
                     </thead>
                     <tbody>
-                        <td>{{log.step_name}} :</td>
-                        <td> {% if log.trigger %} {% trans "Yes" %} {% else %} {% trans "No" %} {% endif %} </td>
-                        <td>{{log.step_name}} :</td>
+
+                        {% for action in log.actions %}
+                            <tr>
+                                <td><b>{{log.step_name}} {{log.source_component}}</b> <i>{{log.operator}}</i> <b> {{log.source_value}}</b> </td>
+                                <td> {% if log.trigger %} {% trans "Yes" %} {% else %} {% trans "No" %} {% endif %} </td>
+                                <td> <b>{{action.targeted_component}}</b> <i>{{action.action}}</i> <b>{{action.targeted_value}}</b> </td>
+                            </tr>
+                        {% endfor %}
                     </tbody>
                 </table>
             </fieldset>
         {% endfor %}
-
-        <script>
-            let fieldSetTitles = document.querySelectorAll('H2');
-            fieldSetTitles.forEach(fieldsetTitle => {
-                fieldsetTitle.classList.add('collapsed')
-                let toggleLink = document.createElement('a')
-                toggleLink.textContent = 'Show'
-                toggleLink.href= ""
-                toggleLink.style.display = "inline"
-                fieldsetTitle.append(toggleLink)
-
-                toggleLink.addEventListener('click', event => {
-                    event.preventDefault()
-                    if (fieldsetTitle.parentElement.classList.contains('collapsed')) {
-                        fieldsetTitle.parentElement.classList.remove('collapsed')
-                        event.target.textContent = 'Hide'
-                    }
-                    else {
-                        fieldsetTitle.parentElement.classList.add('collapsed')
-                        event.target.textContent = 'Show'
-                    }
-                })
-            })
-        </script>
     {% endblock %}
+    <script src="{% static "bundles/core-js.js" %}"></script>
 {% endblock %}

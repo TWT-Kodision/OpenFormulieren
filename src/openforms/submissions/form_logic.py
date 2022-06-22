@@ -99,7 +99,7 @@ def evaluate_form_logic(
     updated_data = deepcopy(step.data)
     for rule in rules:
         if jsonLogic(rule.json_logic_trigger, data):
-            logevent.submission_logic_evaluated(submission, rule, step.form_step, True)
+            logevent.submission_logic_evaluated(submission, rule, step.form_step, trigger=True)
             for action in rule.actions:
                 action_details = action["action"]
                 if action_details["type"] == LogicActionTypes.value:

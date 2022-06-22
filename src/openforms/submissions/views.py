@@ -14,6 +14,7 @@ from privates.views import PrivateMediaView
 from rest_framework.reverse import reverse
 
 from openforms.authentication.constants import FORM_AUTH_SESSION_KEY
+from openforms.forms.constants import LogicActionTypes
 from openforms.logging.models import TimelineLogProxy
 
 from .constants import RegistrationStatuses
@@ -23,7 +24,6 @@ from .utils import add_submmission_to_session
 
 from django.utils.decorators import method_decorator
 from django.contrib.admin.views.decorators import staff_member_required
-from django.contrib.contenttypes.models import ContentType
 logger = logging.getLogger(__name__)
 
 
@@ -208,19 +208,69 @@ class LogsEvaluatedLogic(ListView):
     context_object_name = "logs_activity"
 
     def get(self, request : HttpRequest, submission_id):
-        logs = TimelineLogProxy.objects.filter(
+
+        # Retrieve evaluated logic event related to the the submission 
+        logs = self.model.objects.filter(
             template="logging/events/submission_logic_evaluated.txt", 
             object_id = submission_id)
+        
         logs_information = []
-        print(logs)
         for log in logs :
+            operator = list(log.extra_data['json_logic_trigger'].keys())[0]
             log_information = {}
+
+            # Global rule information 
             log_information['name'] = log.timestamp
             log_information['step_name'] = log.extra_data['step_name']
             log_information['trigger'] = log.extra_data['trigger']
-            #log_information['property_name'] = log.extra_data['json_logic_trigger']['==']["property"]["value"]
-            logs_information.append(log_information)
 
+            # Triggered field information
+
+            # Case specific type of field (e.g date)
+            if 'var' not in log.extra_data['json_logic_trigger'][operator][0] :
+                varType = list(log.extra_data['json_logic_trigger'][operator][0].keys())[0]
+                log_information['source_component']  = f"{log.extra_data['json_logic_trigger'][operator][0][varType]['var']} : {varType} "
+                
+                # Case field compared
+                if isinstance(log.extra_data['json_logic_trigger'][operator][1], dict) :
+                    log_information['source_value'] = log.extra_data['json_logic_trigger'][operator][1][varType]
+
+                # Case value compared
+                else :
+                    log_information['source_value'] = log.extra_data['json_logic_trigger'][operator][1]
+            else : 
+                log_information['source_component'] = log.extra_data['json_logic_trigger'][operator][0]['var']
+                # Case field compared
+                if isinstance(log.extra_data['json_logic_trigger'][operator][1], dict) :
+                    log_information['source_value'] = log.extra_data['json_logic_trigger'][operator][1]['var']
+                # Case array compared
+                elif isinstance(log.extra_data['json_logic_trigger'][operator][1], list) :
+                    log_information['source_value'] = f"Array : {log.extra_data['json_logic_trigger'][operator][1]}" 
+                # Case value compared
+                else :
+                    log_information['source_value'] = log.extra_data['json_logic_trigger'][operator][1]
+                
+            log_information['operator'] = operator
+
+            # Targeted field information
+            log_information['actions'] = []
+            for action in log.extra_data['actions'] :
+                log_action = {}
+                log_action['targeted_component'] = action['component']
+
+                # Action verifications 
+                action_details = action["action"]
+                log_action['targeted_value'] = ""
+                if action_details["type"] == LogicActionTypes.value:
+                    log_action['action'] = action_details['type']
+                    log_action['targeted_value'] = action_details['value']
+                elif action_details["type"] == LogicActionTypes.property:
+                    log_action['action'] = f"{action_details['property']['value']} : {action_details['state']}"
+                elif action_details["type"] == (LogicActionTypes.disable_next or LogicActionTypes.step_not_applicable):
+                    log_action['action'] == action_details["type"]
+                log_information['actions'].append(log_action)
+
+            logs_information.append(log_information)
             self.queryset = logs_information
         return super().get(request)
 

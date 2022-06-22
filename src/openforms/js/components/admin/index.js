@@ -9,6 +9,7 @@ import FormVersionsTable from './form_versions/FormVersionsTable';
 import './sdk-snippet';
 import './plugin_configuration';
 import './form-category';
+import './submission/logging';
 
 import Debug from './debug';
 import SessionStatus from './SessionStatus';
